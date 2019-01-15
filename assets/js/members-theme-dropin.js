@@ -2575,43 +2575,23 @@ DomReady(function () {
 
   function signout(event) {
     event.preventDefault();
+    document.cookie = 'member=null;';
     members.signout().then(reload);
   }
 
   function signin(event) {
     event.preventDefault();
-    members.signin().then(reload);
+    members.signin().then(function() {
+        return members.getToken({audience: new URL(window.location.href).origin});
+    }).then(function (token) {
+        document.cookie = 'member=' + token;
+        return true;
+    }).then(reload);
   }
 
   addListener(signoutBtn, 'click', signout);
   addListener(signinBtn, 'click', signin);
   addListener(signinCta, 'click', signin);
-  membersContentElements.forEach(function (element) {
-    var resourceType = element.getAttribute('data-members-resource-type');
-    var resourceId = element.getAttribute('data-members-resource-id');
-    var host = element.getAttribute('data-members-content-host');
-    var api = GhostContentApi.create({
-      host: host,
-      version: version
-    });
-    var audience = new URL(host).origin;
-    members.getToken({
-      audience: audience
-    }).then(function (token) {
-      if (!token) {
-        return;
-      }
-
-      api[resourceType].read({
-        id: resourceId
-      }, {}, token).then(function (_ref5) {
-        var html = _ref5.html;
-        element.innerHTML = html;
-      }).catch(function (err) {
-        element.innerHTML = err.message;
-      });
-    });
-  });
 });
 
 },{"@tryghost/content-api":1,"@tryghost/members-layer2":12,"domready":13}]},{},[14]);
